@@ -245,6 +245,35 @@ SayHelloPlugin------Leave
 请输入hello，或者hi
 ```
 
+若调整注册内容为
+```c#
+pluginManager.Add<SayHiPlugin>();
+pluginManager.Add<SayHelloPlugin>();
+```
+客户端向服务端发送hello，以下是插件处理消息的时序图
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant HiPlugin
+    participant HelloPlugin
+
+    Client->>Server: 发送 "hello"
+    Server->>HiPlugin: OnTcpReceived()
+    HiPlugin->>HiPlugin: 打印 "HiPlugin start..."
+    HiPlugin->>HiPlugin: 检查消息（非 "Hi"）
+    HiPlugin->>HelloPlugin: await e.InvokeNext()
+    HelloPlugin->>HelloPlugin: 打印 "HelloPlugin start..."
+    HelloPlugin->>HelloPlugin: 匹配 "Hello"，设置 e.Handled=true
+    HelloPlugin->>HelloPlugin: await e.InvokeNext()（无后续插件）
+    HelloPlugin->>HelloPlugin: 打印 "HelloPlugin end..."
+    HelloPlugin-->>HiPlugin: 返回
+    HiPlugin->>HiPlugin: 打印 "HiPlugin end..."
+    HiPlugin-->>Server: 返回
+    Server-->>Client: 响应
+```
+
 ## 八、插件特性
 
 ### 8.1 中断传递
